@@ -298,6 +298,8 @@ export function ProviderConfigModal({
   const [authMode, setAuthMode] = useState<"api_key" | "auth_token">(
     provider.auth_mode ?? "api_key",
   );
+  const [generatingKey, setGeneratingKey] = useState(false);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [customHeaders, setCustomHeaders] = useState<HeaderEntry[]>(
     Object.entries(provider.custom_headers ?? {}).map(([key, value]) => ({
       key,
@@ -468,6 +470,15 @@ export function ProviderConfigModal({
     }
   }, [provider, form, open]);
 
+  // Cleanup polling timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -604,6 +615,50 @@ export function ProviderConfigModal({
         }
       },
     });
+  };
+
+  const isPAAIProvider = provider.id === "pa-ai";
+
+  const handleGenerateKey = async () => {
+    setGeneratingKey(true);
+    try {
+      const result = await api.generatePAIApiKey();
+      window.open(result.cas_url, "_blank");
+
+      const startTime = Date.now();
+      const POLL_INTERVAL = 3000;
+      const TIMEOUT = 5 * 60 * 1000;
+
+      pollTimerRef.current = setInterval(async () => {
+        if (Date.now() - startTime > TIMEOUT) {
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+          setGeneratingKey(false);
+          message.error(t("models.generateApiKeyTimeout"));
+          return;
+        }
+        try {
+          const providers = await api.listProviders();
+          const paAIProvider = providers.find((p: any) => p.id === "pa-ai");
+          if (paAIProvider?.api_key) {
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+            setGeneratingKey(false);
+            await onSaved();
+            message.success(
+              t("models.configurationSaved", { name: provider.name }),
+            );
+          }
+        } catch {
+          // Ignore poll errors, keep trying
+        }
+      }, POLL_INTERVAL);
+    } catch (error) {
+      setGeneratingKey(false);
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : t("models.generateApiKeyFailed", { message: "Unknown error" });
+      message.error(errMsg);
+    }
   };
 
   return (
@@ -770,6 +825,22 @@ export function ProviderConfigModal({
         >
           <Input.Password placeholder={apiKeyPlaceholder} />
         </Form.Item>
+
+        {/* PA-AI Generate Key Button */}
+        {isPAAIProvider && (
+          <Form.Item>
+            <Button
+              type="primary"
+              loading={generatingKey}
+              onClick={handleGenerateKey}
+              disabled={generatingKey}
+            >
+              {generatingKey
+                ? t("models.generatingApiKey")
+                : t("models.generateApiKey")}
+            </Button>
+          </Form.Item>
+        )}
 
         <div className={styles.advancedConfigSection}>
           <button
