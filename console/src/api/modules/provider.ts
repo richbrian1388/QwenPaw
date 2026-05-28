@@ -189,4 +189,12 @@ export const providerApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  /* ---- PA-AI specific endpoint ---- */
+
+  generatePAIApiKey: () =>
+    request<{ cas_url: string; status: string }>(
+      "/models/pa-ai/generate-key",
+      { method: "POST" },
+    ),
 };
