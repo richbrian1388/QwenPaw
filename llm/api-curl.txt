@@ -1,0 +1,23 @@
+接口请求
+curl --location 'https://wizard-ai.paic.com.cn/code_pilot/api/v1/chat/completions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer 3f8ae8167abb4b2001efa62e2409c276b2125915e7e81804715a3a0809e04fc97a15a7fcb1652a8cd900c715b377fd76ea167e93c02d627cf36028e216de7d7dda16fe23702640a9e03c69b943954c2a9b0517062a851d96a52636822fd49dfc' \
+--data '{
+    "model": "PUB-GLM-4.7",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "context windows是什么？你的最大context windows是多少？"
+      }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 512
+  }'
+
+
+### 接口响应
+{"metadata":{"weight_version":"default"},"created":1779941182,"usage":{"completion_tokens":222,"prompt_tokens":22,"total_tokens":244,"reasoning_tokens":0},"model":"aicoder-model","id":"fd53ddd69f844a54abc5b01ca17e034e","choices":[{"finish_reason":"stop","matched_stop":151336,"index":0,"message":{"role":"assistant","content":"**Context Windows（上下文窗口）** 是指大语言模型（LLM）在处理输入和生成输出时，能够一次性“记住”或处理的文本总量（通常以 Token 为单位）。\n\n你可以把它想象成模型的**短期记忆容量**或**工作台的大小**：\n\n1.  **输入部分**：你发给模型的提示词、上传的文档、历史对话记录等。\n2.  **输出部分**：模型生成的回答。\n3.  **总量限制**：输入 + 输出的 Token 数量不能超过 Context Windows 的上限。\n\n如果超出了这个限制，模型就会“忘记”最早的内容，或者无法处理过长的文档。\n\n---\n\n### 关于我的最大 Context Windows\n\n我是由 Z.ai 训练的 GLM 大语言模型。具体的技术规格（如 Context Windows 的精确大小）可能会随着版本迭代而调整。\n\n一般来说，我支持较长的上下文处理能力，能够处理长文档、多轮对话等复杂任务。如果你有具体的长文档处理需求，可以直接发给我测试，我会尽力为你提供帮助！"}}],"object":"chat.completion"}
