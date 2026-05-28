@@ -27,6 +27,7 @@ from ...providers.provider import ProviderInfo, ModelInfo
 from ...config.config import ActiveModelsInfo
 from ...providers.provider_manager import ProviderManager
 from ...providers.openrouter_provider import OpenRouterProvider
+from ...providers import pa_ai_auth
 from ...config.config import ModelSlotConfig
 
 logger = logging.getLogger(__name__)
@@ -949,3 +950,44 @@ async def filter_openrouter_models(
             status_code=500,
             detail=f"Failed to filter models: {str(exc)}",
         ) from exc
+
+
+# ---- PA-AI specific endpoint ----
+
+
+class GenerateKeyResponse(BaseModel):
+    cas_url: str = Field(..., description="CAS login URL to open in browser")
+    status: str = Field(default="waiting", description="Session status")
+
+
+@router.post(
+    "/pa-ai/generate-key",
+    response_model=GenerateKeyResponse,
+    summary="Generate PA-AI API key via CAS authentication",
+)
+async def generate_pa_ai_key(
+    request: Request,
+    manager: ProviderManager = Depends(get_provider_manager),
+) -> GenerateKeyResponse:
+    if pa_ai_auth.is_cas_session_active():
+        raise HTTPException(
+            status_code=409,
+            detail="A CAS authentication session is already in progress.",
+        )
+
+    def _save_key_to_provider(api_key: str) -> None:
+        provider = manager.builtin_providers.get("pa-ai")
+        if provider is None:
+            logger.error("PA-AI: provider not found in builtin_providers")
+            return
+        manager.update_provider("pa-ai", {"api_key": api_key})
+        logger.info("PA-AI: API key saved to provider config")
+
+    try:
+        cas_url, _thread = pa_ai_auth.start_cas_auth_session(
+            on_success=_save_key_to_provider,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return GenerateKeyResponse(cas_url=cas_url)
