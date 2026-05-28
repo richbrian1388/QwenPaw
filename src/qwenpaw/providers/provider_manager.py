@@ -1002,6 +1002,20 @@ PROVIDER_VOLCENGINE_CN_CODINGPLAN = OpenAIProvider(
     support_model_discovery=False,
 )
 
+PROVIDER_PA_AI = OpenAIProvider(
+    id="pa-ai",
+    name="PA-AI",
+    base_url="https://wizard-ai.paic.com.cn/code_pilot/api/v1",
+    api_key_prefix="",
+    models=[
+        ModelInfo(id="PUB-GLM-4.7", name="PUB-GLM-4.7"),
+    ],
+    freeze_url=True,
+    require_api_key=True,
+    support_model_discovery=True,
+    support_connection_check=True,
+)
+
 
 class ProviderManager:  # pylint: disable=too-many-public-methods
     """A manager class to handle all providers,
@@ -1071,6 +1085,7 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
         self._add_builtin(PROVIDER_SILICONFLOW_INTL)
         self._add_builtin(PROVIDER_VOLCENGINE_CN)
         self._add_builtin(PROVIDER_VOLCENGINE_CN_CODINGPLAN)
+        self._add_builtin(PROVIDER_PA_AI)
 
     def _add_builtin(self, provider: Provider):
         self.builtin_providers[provider.id] = provider
