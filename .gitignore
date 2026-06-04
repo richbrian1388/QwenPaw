@@ -68,7 +68,8 @@ yarn-error.log*
 openapi-ts*.log
 
 # Only ignore npm lockfiles inside subpackages
-console/package-lock.json
+# NOTE: console/package-lock.json is intentionally tracked — npm ci (used by the
+# desktop/wheel/CI build scripts) requires it for reproducible installs.
 website/package-lock.json
 
 # MacOS
