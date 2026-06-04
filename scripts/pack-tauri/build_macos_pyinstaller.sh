@@ -116,11 +116,15 @@ cd ..
 echo "Tauri app built"
 echo ""
 
-APP_PATH="${BUNDLE_DIR}/macos/QwenPaw Desktop.app"
-if [ ! -d "${APP_PATH}" ]; then
-    echo "ERROR: No Tauri macOS app found at ${APP_PATH}"
+# Discover the bundled .app by glob instead of hardcoding the productName.
+# bundle/macos is cleaned above, so Tauri leaves exactly one .app here. This
+# survives productName changes (e.g. "SXPaw Desktop") without editing this script.
+APP_PATH="$(find "${BUNDLE_DIR}/macos" -maxdepth 1 -name '*.app' -type d | head -n1)"
+if [ -z "${APP_PATH}" ] || [ ! -d "${APP_PATH}" ]; then
+    echo "ERROR: No Tauri macOS .app bundle found in ${BUNDLE_DIR}/macos"
     exit 1
 fi
+echo "Found app bundle: ${APP_PATH}"
 
 echo "== Step 3b: Signing Final macOS App =="
 bash "${SIGN_MACOS_BUNDLE}" \
