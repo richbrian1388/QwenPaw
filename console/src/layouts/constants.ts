@@ -139,9 +139,9 @@ export const compareVersions = (a: string, b: string): number => {
 // ── Update markdown ───────────────────────────────────────────────────────
 // TODO
 export const UPDATE_MD: Record<string, string> = {
-  zh: `### QwenPaw如何更新
+  zh: `### SXPaw如何更新
 
-要更新 QwenPaw 到最新版本，可根据你的安装方式选择对应方法：
+要更新 SXPaw 到最新版本，可根据你的安装方式选择对应方法：
 
 1. 如果你使用的是一键安装脚本，直接重新运行安装命令即可自动升级。
 
@@ -171,9 +171,9 @@ docker run -p 127.0.0.1:8088:8088 -v qwenpaw-data:/app/working -v qwenpaw-secret
 
 升级后重启服务 qwenpaw app。`,
 
-  ru: `### Как обновить QwenPaw
+  ru: `### Как обновить SXPaw
 
-Чтобы обновить QwenPaw, выберите способ в зависимости от типа установки:
+Чтобы обновить SXPaw, выберите способ в зависимости от типа установки:
 
 1. Если вы устанавливали через однострочный скрипт, повторно запустите установщик для обновления.
 
@@ -203,9 +203,9 @@ docker run -p 127.0.0.1:8088:8088 -v qwenpaw-data:/app/working -v qwenpaw-secret
 
 After upgrading, restart the service with \`qwenpaw app\`.`,
 
-  en: `### How to update QwenPaw
+  en: `### How to update SXPaw
 
-To update QwenPaw, use the method matching your installation type:
+To update SXPaw, use the method matching your installation type:
 
 1. If installed via one-line script, re-run the installer to upgrade.
 

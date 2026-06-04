@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CAS_LOGIN_URL = "https://vt.paic.com.cn/user-center-web/cas/login"
 DEFAULT_SM4_KEY_HEX = "52aad0c09e6b46818a11ee702d6fe0ba"
-SERVICE_NAME_PARAM = "c3FtcS1jb2RlLXBpbG90"
+SERVICE_NAME_PARAM = "c3Ftcy1jb2RlLXBpbG90"
 LOGIN_TIMEOUT_SECONDS = 300
 
 SM4_BLOCK_SIZE = 16

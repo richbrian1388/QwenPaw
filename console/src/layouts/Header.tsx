@@ -166,13 +166,15 @@ export default function Header() {
     <>
       <AntHeader className={styles.header}>
         <div className={styles.logoWrapper}>
-          <img
-            src={isDark ? "/logo-dark.svg" : "/logo-light.svg"}
-            alt="QwenPaw"
-            className={styles.logoImg}
-          />
-          <div className={styles.logoDivider} />
-          {version && (
+          {false && (
+            <img
+              src={isDark ? "/logo-dark.svg" : "/logo-light.svg"}
+              alt="QwenPaw"
+              className={styles.logoImg}
+            />
+          )}
+          {false && <div className={styles.logoDivider} />}
+          {false && version && (
             <Badge
               dot={!!hasUpdate}
               color="rgba(255, 157, 77, 1)"
@@ -192,51 +194,55 @@ export default function Header() {
           )}
         </div>
         <Space size="middle">
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "tutorial",
-                  icon: <ReadOutlined />,
-                  label: t("header.tutorial"),
-                  onClick: () => handleNavClick(getDocsUrl(i18n.language)),
-                },
-                {
-                  key: "featureDemos",
-                  icon: <PlayCircleOutlined />,
-                  label: t("header.featureDemos"),
-                  onClick: () =>
-                    handleNavClick(getFeatureDemosUrl(i18n.language)),
-                },
-                {
-                  key: "changelog",
-                  icon: <FileTextOutlined />,
-                  label: t("header.changelog"),
-                  onClick: () =>
-                    handleNavClick(getReleaseNotesUrl(i18n.language)),
-                },
-                {
-                  key: "faq",
-                  icon: <QuestionCircleOutlined />,
-                  label: t("header.faq"),
-                  onClick: () => handleNavClick(getFaqUrl(i18n.language)),
-                },
-              ] as MenuProps["items"],
-            }}
-          >
-            <Button type="text">
-              {t("header.resources")} <DownOutlined />
-            </Button>
-          </Dropdown>
-          <Tooltip title={t("header.github")}>
-            <Button
-              type="text"
-              icon={<GithubOutlined />}
-              onClick={() => handleNavClick(GITHUB_URL)}
+          {false && (
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: "tutorial",
+                    icon: <ReadOutlined />,
+                    label: t("header.tutorial"),
+                    onClick: () => handleNavClick(getDocsUrl(i18n.language)),
+                  },
+                  {
+                    key: "featureDemos",
+                    icon: <PlayCircleOutlined />,
+                    label: t("header.featureDemos"),
+                    onClick: () =>
+                      handleNavClick(getFeatureDemosUrl(i18n.language)),
+                  },
+                  {
+                    key: "changelog",
+                    icon: <FileTextOutlined />,
+                    label: t("header.changelog"),
+                    onClick: () =>
+                      handleNavClick(getReleaseNotesUrl(i18n.language)),
+                  },
+                  {
+                    key: "faq",
+                    icon: <QuestionCircleOutlined />,
+                    label: t("header.faq"),
+                    onClick: () => handleNavClick(getFaqUrl(i18n.language)),
+                  },
+                ] as MenuProps["items"],
+              }}
             >
-              {t("header.github")}
-            </Button>
-          </Tooltip>
+              <Button type="text">
+                {t("header.resources")} <DownOutlined />
+              </Button>
+            </Dropdown>
+          )}
+          {false && (
+            <Tooltip title={t("header.github")}>
+              <Button
+                type="text"
+                icon={<GithubOutlined />}
+                onClick={() => handleNavClick(GITHUB_URL)}
+              >
+                {t("header.github")}
+              </Button>
+            </Tooltip>
+          )}
           <div className={styles.headerDivider} />
           <CodingModeToggle />
           <div className={styles.headerDivider} />

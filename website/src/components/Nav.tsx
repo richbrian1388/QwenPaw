@@ -91,7 +91,7 @@ export function Nav() {
             target="_blank"
             rel="noopener noreferrer"
             className={navLinkOrangeClass}
-            title="QwenPaw on GitHub"
+            title="SXPaw on GitHub"
           >
             <GitHubIcon />
             <span>{t("nav.github")}</span>
@@ -163,7 +163,7 @@ export function Nav() {
           rel="noopener noreferrer"
           className={navLinkOrangeClass}
           onClick={() => setOpen(false)}
-          title="QwenPaw on GitHub"
+          title="SXPaw on GitHub"
         >
           <GitHubIcon /> {t("nav.github")}
         </a>

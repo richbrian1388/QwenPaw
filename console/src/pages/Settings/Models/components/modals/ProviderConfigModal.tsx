@@ -274,6 +274,10 @@ interface ProviderConfigModalProps {
     custom_headers?: Record<string, string>;
     auth_mode?: "api_key" | "auth_token";
     meta?: Record<string, unknown>;
+    /** Built-in models */
+    models?: { id: string; name: string }[];
+    /** User-added models */
+    extra_models?: { id: string; name: string }[];
   };
   activeModels: any;
   open: boolean;
@@ -299,6 +303,9 @@ export function ProviderConfigModal({
     provider.auth_mode ?? "api_key",
   );
   const [generatingKey, setGeneratingKey] = useState(false);
+  const [pipConfiguring, setPipConfiguring] = useState(false);
+  const [pipConfigured, setPipConfigured] = useState(false);
+  const [paaiModelName, setPaaiModelName] = useState<string>("");
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [customHeaders, setCustomHeaders] = useState<HeaderEntry[]>(
     Object.entries(provider.custom_headers ?? {}).map(([key, value]) => ({
@@ -467,6 +474,20 @@ export function ProviderConfigModal({
           value,
         })),
       );
+      // Check pip config status for PA-AI provider
+      if (provider.id === "pa-ai") {
+        api.getPipSourceStatus()
+          .then((status) => setPipConfigured(status.configured))
+          .catch(() => setPipConfigured(false));
+        // Initialize PA-AI model name from current active model only;
+        // do not fallback to built-in defaults so users always see what
+        // they configured.
+        const currentModel =
+          activeModels?.active_llm?.provider_id === "pa-ai"
+            ? activeModels.active_llm.model
+            : "";
+        setPaaiModelName(currentModel || "");
+      }
     }
   }, [provider, form, open]);
 
@@ -528,6 +549,25 @@ export function ProviderConfigModal({
         auth_mode: isAnthropicProvider ? authMode : undefined,
       });
 
+      // For PA-AI: ensure the selected model exists and set it as active
+      if (isPAAIProvider && paaiModelName.trim()) {
+        const allModelIds = [
+          ...(provider.models ?? []),
+          ...(provider.extra_models ?? []),
+        ].map((m) => m.id);
+        if (!allModelIds.includes(paaiModelName.trim())) {
+          await api.addModel(provider.id, {
+            id: paaiModelName.trim(),
+            name: paaiModelName.trim(),
+          });
+        }
+        await api.setActiveLlm({
+          provider_id: provider.id,
+          model: paaiModelName.trim(),
+          scope: "global",
+        });
+      }
+
       await onSaved();
       setFormDirty(false);
       onClose();
@@ -562,6 +602,7 @@ export function ProviderConfigModal({
         chat_model: values.chat_model,
         custom_headers: testHeaders,
         auth_mode: isAnthropicProvider ? authMode : undefined,
+        model_id: isPAAIProvider ? paaiModelName : undefined,
       });
       if (result.success) {
         message.success(getLocalizedTestConnectionMessage(result, t));
@@ -618,6 +659,30 @@ export function ProviderConfigModal({
   };
 
   const isPAAIProvider = provider.id === "pa-ai";
+
+  const handleConfigurePip = async () => {
+    setPipConfiguring(true);
+    try {
+      const result = await api.configurePipSource({});
+      setPipConfigured(true);
+      message.success(
+        `Pip source configured: ${result.path}`,
+      );
+    } catch (error) {
+      const errMsg =
+        error instanceof Error ? error.message : "Failed to configure pip source";
+      if (errMsg.includes("already configured")) {
+        setPipConfigured(true);
+        message.info(errMsg);
+      } else if (errMsg.includes("already exists")) {
+        message.warning(errMsg);
+      } else {
+        message.error(errMsg);
+      }
+    } finally {
+      setPipConfiguring(false);
+    }
+  };
 
   const handleGenerateKey = async () => {
     setGeneratingKey(true);
@@ -826,20 +891,79 @@ export function ProviderConfigModal({
           <Input.Password placeholder={apiKeyPlaceholder} />
         </Form.Item>
 
-        {/* PA-AI Generate Key Button */}
+        {/* PA-AI Model Name & Actions */}
         {isPAAIProvider && (
-          <Form.Item>
-            <Button
-              type="primary"
-              loading={generatingKey}
-              onClick={handleGenerateKey}
-              disabled={generatingKey}
+          <>
+            <Form.Item
+              label={t("models.paaiModelName")}
+              extra={t("models.paaiModelNameHint")}
             >
-              {generatingKey
-                ? t("models.generatingApiKey")
-                : t("models.generateApiKey")}
-            </Button>
-          </Form.Item>
+              <Select
+                showSearch
+                allowClear={false}
+                value={paaiModelName || undefined}
+                onChange={(value: string) => {
+                  setPaaiModelName(value);
+                  setFormDirty(true);
+                }}
+                placeholder={t("models.paaiModelNamePlaceholder")}
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    <div style={{ padding: "4px 8px", borderTop: "1px solid #f0f0f0" }}>
+                      <Input
+                        placeholder={t("models.paaiCustomModelPlaceholder")}
+                        onPressEnter={(e) => {
+                          const val = (e.target as HTMLInputElement).value.trim();
+                          if (val) {
+                            setPaaiModelName(val);
+                            setFormDirty(true);
+                          }
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+              >
+                {[
+                  ...(provider.models ?? []),
+                  ...(provider.extra_models ?? []),
+                ]
+                  .reduce<{ id: string; name: string }[]>(
+                    (acc, m) =>
+                      acc.some((x) => x.id === m.id) ? acc : [...acc, m],
+                    [],
+                  )
+                  .map((m) => (
+                    <Select.Option key={m.id} value={m.id}>
+                      {m.name || m.id}
+                    </Select.Option>
+                  ))}
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Button
+                type="primary"
+                loading={generatingKey}
+                onClick={handleGenerateKey}
+                disabled={generatingKey}
+              >
+                {generatingKey
+                  ? t("models.generatingApiKey")
+                  : t("models.generateApiKey")}
+              </Button>
+              <Button
+                style={{ marginLeft: 8 }}
+                loading={pipConfiguring}
+                onClick={handleConfigurePip}
+                disabled={pipConfiguring || pipConfigured}
+              >
+                {pipConfigured
+                  ? "Pip Source Configured"
+                  : "Configure Pip Source"}
+              </Button>
+            </Form.Item>
+          </>
         )}
 
         <div className={styles.advancedConfigSection}>

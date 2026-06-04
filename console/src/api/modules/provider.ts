@@ -197,4 +197,20 @@ export const providerApi = {
       "/models/pa-ai/generate-key",
       { method: "POST" },
     ),
+
+  configurePipSource: (body: {
+    index_url?: string;
+    trusted_host?: string;
+  }) =>
+    request<{ path: string; updated: boolean; previous: string | null }>(
+      "/models/pa-ai/pip-config",
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+
+  getPipSourceStatus: () =>
+    request<{
+      configured: boolean;
+      path: string | null;
+      content: string | null;
+    }>("/models/pa-ai/pip-config", { method: "GET" }),
 };

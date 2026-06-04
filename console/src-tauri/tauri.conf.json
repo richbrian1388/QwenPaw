@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "QwenPaw Desktop",
+  "productName": "SXPaw Desktop",
   "identifier": "io.agentscope.qwenpaw.desktop",
   "build": {
     "frontendDist": "../dist-tauri",
@@ -12,7 +12,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "QwenPaw Desktop",
+        "title": "SXPaw Desktop",
         "width": 1280,
         "height": 800,
         "minWidth": 960,

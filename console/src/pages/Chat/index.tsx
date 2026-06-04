@@ -1064,6 +1064,7 @@ export default function ChatPage() {
       biz_params?: Record<string, unknown>;
       signal?: AbortSignal;
     }): Promise<Response> => {
+      console.log("[customFetch] called with:", data);
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         ...buildAuthHeaders(),
@@ -1145,17 +1146,6 @@ export default function ChatPage() {
     }) => {
       const { file, onSuccess, onError, onProgress } = options;
       try {
-        // Warn when model has no multimodal support
-        if (!multimodalCaps.supportsMultimodal) {
-          message.warning(t("chat.attachments.multimodalWarning"));
-        } else if (
-          multimodalCaps.supportsImage &&
-          !multimodalCaps.supportsVideo &&
-          !file.type.startsWith("image/")
-        ) {
-          // Warn (not block) when only image is supported
-          message.warning(t("chat.attachments.imageOnlyWarning"));
-        }
         const sizeMb = file.size / 1024 / 1024;
         const isWithinLimit = sizeMb < CHAT_ATTACHMENT_MAX_MB;
 
@@ -1238,7 +1228,7 @@ export default function ChatPage() {
       },
       welcome: {
         ...i18nConfig.welcome,
-        nick: "QwenPaw",
+        nick: "SXPaw",
         avatar: "/qwenpaw.png",
       },
       sender: {

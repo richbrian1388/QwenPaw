@@ -82,19 +82,61 @@ class OpenAIProvider(Provider):
             deduped.append(model)
         return deduped
 
-    async def check_connection(self, timeout: float = 5) -> tuple[bool, str]:
+    async def check_connection(
+        self, timeout: float = 5, model_id: str | None = None
+    ) -> tuple[bool, str]:
         """Check if OpenAI provider is reachable with current configuration."""
         client = self._client()
         try:
             await client.models.list(timeout=timeout)
             return True, ""
-        except APIError:
-            return False, f"API error when connecting to `{self.base_url}`"
+        except APIError as exc:
+            return False, f"API error when connecting to `{self.base_url}`: {exc}"
         except Exception:
-            return (
-                False,
-                f"Unknown exception when connecting to `{self.base_url}`",
-            )
+            # Some compatible endpoints (e.g. PA-AI) don't implement /v1/models.
+            # Fallback to a lightweight chat completion ping using the
+            # caller-specified model or the first configured model so the
+            # connection test still works.
+            first_model = model_id or (
+                self.models[0].id if self.models else ""
+            ) or ""
+            if not first_model:
+                return (
+                    False,
+                    f"Unknown exception when connecting to `{self.base_url}`",
+                )
+            try:
+                ping_client = self._client(timeout=timeout)
+                await ping_client.chat.completions.create(
+                    model=first_model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [{"type": "text", "text": "ping"}],
+                        },
+                    ],
+                    timeout=timeout,
+                    max_tokens=1,
+                    stream=False,
+                )
+                return True, ""
+            except APIError as exc:
+                return (
+                    False,
+                    f"API error when connecting to `{self.base_url}`: {exc}",
+                )
+            except Exception as exc:
+                logger.warning(
+                    "OpenAIProvider check_connection failed for %s: %s: %s",
+                    self.base_url,
+                    type(exc).__name__,
+                    exc,
+                    exc_info=True,
+                )
+                return (
+                    False,
+                    f"Connection failed: {type(exc).__name__}: {exc}",
+                )
 
     async def fetch_models(self, timeout: float = 5) -> List[ModelInfo]:
         """Fetch available models."""
@@ -120,6 +162,8 @@ class OpenAIProvider(Provider):
 
         try:
             client = self._client(timeout=timeout)
+            generate_kwargs = self.get_effective_generate_kwargs(model_id)
+            stream = generate_kwargs.get("stream", True)
             res = await client.chat.completions.create(
                 model=model_id,
                 messages=[
@@ -135,11 +179,12 @@ class OpenAIProvider(Provider):
                 ],
                 timeout=timeout,
                 max_tokens=20,
-                stream=True,
+                stream=stream,
             )
-            # consume the stream to ensure the model is actually responsive
-            async for _ in res:
-                break
+            if stream:
+                # consume the stream to ensure the model is actually responsive
+                async for _ in res:
+                    break
             return True, ""
         except APIError:
             return False, f"API error when connecting to model '{model_id}'"
@@ -182,13 +227,16 @@ class OpenAIProvider(Provider):
         if merged_headers:
             client_kwargs["default_headers"] = merged_headers
 
+        generate_kwargs = self.get_effective_generate_kwargs(model_id)
+        stream = generate_kwargs.pop("stream", True)
+
         return OpenAIChatModelCompat(
             model_name=model_id,
-            stream=True,
+            stream=stream,
             api_key=self.api_key,
             stream_tool_parsing=False,
             client_kwargs=client_kwargs,
-            generate_kwargs=self.get_effective_generate_kwargs(model_id),
+            generate_kwargs=generate_kwargs,
         )
 
     async def probe_model_multimodal(

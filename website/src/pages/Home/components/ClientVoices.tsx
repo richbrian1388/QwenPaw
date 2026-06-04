@@ -38,27 +38,27 @@ const AVATARS = [
   {
     key: "a1",
     src: AVATAR_URLS.a1,
-    alt: "QwenPaw user avatar 1",
+    alt: "SXPaw user avatar 1",
   },
   {
     key: "a2",
     src: AVATAR_URLS.a2,
-    alt: "QwenPaw user avatar 2",
+    alt: "SXPaw user avatar 2",
   },
   {
     key: "a3",
     src: AVATAR_URLS.a3,
-    alt: "QwenPaw user avatar 3",
+    alt: "SXPaw user avatar 3",
   },
   {
     key: "a4",
     src: AVATAR_URLS.a4,
-    alt: "QwenPaw user avatar 4",
+    alt: "SXPaw user avatar 4",
   },
   {
     key: "a5",
     src: AVATAR_URLS.a5,
-    alt: "QwenPaw user avatar 5",
+    alt: "SXPaw user avatar 5",
   },
 ] as const;
 

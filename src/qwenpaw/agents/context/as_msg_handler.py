@@ -122,14 +122,18 @@ class AsMsgHandler:
 
             elif block_type in ("image", "audio", "video", "file"):
                 source = block.get("source", {})
-                url = source.get("url", "")
-                if source.get("type") == "base64":
-                    data = source.get("data", "")
-                    token_count = len(data) // 4 if data else 10
+                if isinstance(source, str):
+                    url = source
+                    token_count = await self.count_str_token(url) if url else 10
                 else:
-                    token_count = (
-                        await self.count_str_token(url) if url else 10
-                    )
+                    url = source.get("url", "")
+                    if source.get("type") == "base64":
+                        data = source.get("data", "")
+                        token_count = len(data) // 4 if data else 10
+                    else:
+                        token_count = (
+                            await self.count_str_token(url) if url else 10
+                        )
                 blocks.append(
                     AsBlockStat(
                         block_type=block_type,

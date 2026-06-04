@@ -28,6 +28,7 @@ from ...config.config import ActiveModelsInfo
 from ...providers.provider_manager import ProviderManager
 from ...providers.openrouter_provider import OpenRouterProvider
 from ...providers import pa_ai_auth
+from ...utils import pip_config
 from ...config.config import ModelSlotConfig
 
 logger = logging.getLogger(__name__)
@@ -280,6 +281,10 @@ class TestProviderRequest(BaseModel):
         default=None,
         description="Authentication mode to use for this test request",
     )
+    model_id: Optional[str] = Field(
+        default=None,
+        description="Optional model ID to use for connection test",
+    )
 
 
 class TestModelRequest(BaseModel):
@@ -344,7 +349,9 @@ async def test_provider(
         if body and body.auth_mode in ("api_key", "auth_token"):
             overrides["auth_mode"] = body.auth_mode
         tmp_provider = provider.model_copy(update=overrides)
-        ok, msg = await tmp_provider.check_connection()
+        ok, msg = await tmp_provider.check_connection(
+            model_id=body.model_id if body else None,
+        )
         return TestConnectionResponse(
             success=ok,
             message=(
@@ -991,3 +998,59 @@ async def generate_pa_ai_key(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     return GenerateKeyResponse(cas_url=cas_url)
+
+
+class PipConfigRequest(BaseModel):
+    index_url: str = Field(
+        default=pip_config.DEFAULT_INDEX_URL,
+        description="PyPI index URL",
+    )
+    trusted_host: str = Field(
+        default=pip_config.DEFAULT_TRUSTED_HOST,
+        description="Trusted host for the index URL",
+    )
+
+
+class PipConfigResponse(BaseModel):
+    path: str = Field(..., description="Path to the written config file")
+    updated: bool = Field(..., description="Whether the config was written")
+    previous: str | None = Field(
+        None,
+        description="Previous config content if any",
+    )
+
+
+@router.post(
+    "/pa-ai/pip-config",
+    response_model=PipConfigResponse,
+    summary="Configure pip source for intranet environment",
+)
+async def configure_pip_source(
+    body: PipConfigRequest = Body(...),
+) -> PipConfigResponse:
+    """Write pip.conf / pip.ini with the intranet PyPI mirror."""
+    try:
+        result = pip_config.configure_pip_source(
+            index_url=body.index_url,
+            trusted_host=body.trusted_host,
+        )
+    except pip_config.PipConfigAlreadySetError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except pip_config.PipConfigAlreadyExistsError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to write pip config: {exc}",
+        ) from exc
+    return PipConfigResponse(**result)
+
+
+@router.get(
+    "/pa-ai/pip-config",
+    response_model=dict,
+    summary="Get current pip source configuration status",
+)
+async def get_pip_source_status() -> dict:
+    """Check whether pip source is already configured."""
+    return pip_config.get_pip_source_status()

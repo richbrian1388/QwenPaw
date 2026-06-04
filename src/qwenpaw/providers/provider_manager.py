@@ -1008,12 +1008,13 @@ PROVIDER_PA_AI = OpenAIProvider(
     base_url="https://wizard-ai.paic.com.cn/code_pilot/api/v1",
     api_key_prefix="",
     models=[
-        ModelInfo(id="PUB-GLM-4.7", name="PUB-GLM-4.7"),
+        ModelInfo(id="PUB-DeepSeek-V4-Flash", name="PUB-DeepSeek-V4-Flash"),
     ],
     freeze_url=True,
     require_api_key=True,
     support_model_discovery=True,
     support_connection_check=True,
+    generate_kwargs={"stream": False},
 )
 
 

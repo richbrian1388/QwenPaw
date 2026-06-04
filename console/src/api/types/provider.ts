@@ -184,6 +184,7 @@ export interface TestProviderRequest {
   include_extended?: boolean;
   custom_headers?: Record<string, string>;
   auth_mode?: "api_key" | "auth_token";
+  model_id?: string;
 }
 
 export interface TestModelRequest {
