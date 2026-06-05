@@ -65,7 +65,7 @@ import {
   type CopyableResponse,
   type RuntimeLoadingBridgeApi,
 } from "./utils";
-import { openExternalLink } from "../../utils/openExternalLink";
+import { downloadFile } from "../../utils/downloadFile";
 import { getLastEditorCopy } from "../Coding/lastEditorCopy";
 
 const CHAT_ATTACHMENT_MAX_MB = 10;
@@ -890,7 +890,7 @@ export default function ChatPage() {
   const onFileCardClick = useCallback(
     (fileInfo: { name?: string; size?: number; url?: string }) => {
       if (fileInfo.url) {
-        openExternalLink(fileInfo.url);
+        void downloadFile(fileInfo.url, fileInfo.name);
       }
     },
     [],
