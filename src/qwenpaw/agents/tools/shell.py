@@ -43,8 +43,33 @@ def _kill_process_tree_win32(pid: int) -> None:
 
 
 def _windows_shell_creationflags() -> int:
-    """Return Windows process flags for shell commands."""
+    """Return Windows process flags for shell commands.
+
+    ``CREATE_NEW_PROCESS_GROUP`` lets us signal the whole tree on timeout.
+    We deliberately do NOT add ``CREATE_NO_WINDOW`` here — that flag can trip
+    Windows Defender heuristics (the same reason ``ast_tool`` / ``_lsp_client``
+    avoid it). The flashing console window is suppressed via ``STARTUPINFO`` /
+    ``SW_HIDE`` instead — see ``_windows_hidden_startupinfo``.
+    """
     return getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+
+
+def _windows_hidden_startupinfo():
+    """Return a STARTUPINFO that hides the child's console window on Windows.
+
+    The backend runs as a windowless sidecar (no console of its own), so each
+    ``cmd``/``python`` child it spawns would otherwise be given a brand-new
+    console window that flashes on screen. ``STARTF_USESHOWWINDOW`` + ``SW_HIDE``
+    keep that console hidden without ``CREATE_NO_WINDOW`` (which the project
+    avoids for Defender reasons); descendants such as soffice inherit it too.
+    Returns ``None`` off Windows, where ``startupinfo`` does not apply.
+    """
+    if sys.platform != "win32":
+        return None
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    return startupinfo
 
 
 def _collapse_newlines_outside_quotes(cmd: str) -> str:
@@ -301,6 +326,7 @@ def _execute_subprocess_sync(
             cwd=cwd,
             env=env,
             creationflags=_windows_shell_creationflags(),
+            startupinfo=_windows_hidden_startupinfo(),
         )
 
         # Parent copies are no longer needed — the child inherited its own

@@ -1,6 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "SXPaw Desktop",
+  "mainBinaryName": "SXPaw",
   "identifier": "io.agentscope.qwenpaw.desktop",
   "build": {
     "frontendDist": "../dist-tauri",

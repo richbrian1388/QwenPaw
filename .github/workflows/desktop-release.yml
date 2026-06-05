@@ -191,7 +191,7 @@ jobs:
           if (-not $installer) {
             throw "No Tauri Windows installer found"
           }
-          $target = "dist/QwenPaw-Tauri-${{ steps.version.outputs.version }}-Windows-setup.exe"
+          $target = "dist/SXPaw-${{ steps.version.outputs.version }}-Windows-setup.exe"
           Copy-Item -Force $installer.FullName $target
           Write-Host "Staged Tauri Windows installer: $target"
 
@@ -199,7 +199,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: QwenPaw-Desktop-Tauri-Windows-${{ steps.version.outputs.version }}
-          path: dist/QwenPaw-Tauri-*-Windows-setup.exe
+          path: dist/SXPaw-*-Windows-setup.exe
 
   build-tauri-macos:
     runs-on: macos-14
@@ -261,7 +261,7 @@ jobs:
         run: |
           mv QwenPaw-Desktop-Windows-*/QwenPaw-Setup-*.exe . 2>/dev/null || true
           mv QwenPaw-Desktop-macOS-*/QwenPaw-*.zip . 2>/dev/null || true
-          mv QwenPaw-Desktop-Tauri-Windows-*/QwenPaw-Tauri-*-Windows-setup.exe . 2>/dev/null || true
+          mv QwenPaw-Desktop-Tauri-Windows-*/SXPaw-*-Windows-setup.exe . 2>/dev/null || true
           mv QwenPaw-Desktop-Tauri-macOS-*/QwenPaw-Tauri-*-macOS.zip . 2>/dev/null || true
 
       - name: Upload to Release
@@ -270,7 +270,7 @@ jobs:
           files: |
             QwenPaw-Setup-*.exe
             QwenPaw-[0-9]*-macOS.zip
-            QwenPaw-Tauri-*-Windows-setup.exe
+            SXPaw-*-Windows-setup.exe
             QwenPaw-Tauri-*-macOS.zip
           fail-on-unmatched-files: false
         env:
@@ -454,10 +454,10 @@ jobs:
 
           upload_tauri_artifact \
             "QwenPaw-Desktop-Tauri-Windows-*" \
-            "QwenPaw-Tauri-*-Windows-setup.exe" \
+            "SXPaw-*-Windows-setup.exe" \
             "win-tauri" \
-            "QwenPaw-Tauri-${VERSION}-Windows-setup.exe" \
-            "QwenPaw-Tauri-latest-Windows-setup.exe" \
+            "SXPaw-${VERSION}-Windows-setup.exe" \
+            "SXPaw-latest-Windows-setup.exe" \
             "win-tauri-metadata.json"
 
           upload_tauri_artifact \
@@ -528,7 +528,7 @@ jobs:
           merge_tauri_metadata \
             "win-tauri-metadata.json" \
             "QwenPaw-Desktop-Tauri-Windows-*" \
-            "QwenPaw-Tauri-*-Windows-setup.exe" \
+            "SXPaw-*-Windows-setup.exe" \
             "win-tauri"
           merge_tauri_metadata \
             "mac-tauri-metadata.json" \

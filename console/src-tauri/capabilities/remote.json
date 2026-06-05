@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "backend-console-remote",
+  "description": "After the Tauri webview navigates to the backend-hosted console at http://127.0.0.1:<port>/console (a remote origin, not the local tauri:// page), Tauri does NOT inject IPC there by default, so isTauri()/invoke are unavailable and app commands like open_external cannot run. This capability grants core IPC to the local backend origin (any loopback port, since the backend binds an ephemeral port) so the console can invoke open_external to download files / open external links in the system browser. Scope is limited to loopback hosts; the webview only ever loads our own backend.",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["http://127.0.0.1:*", "http://localhost:*"]
+  },
+  "permissions": ["core:default"]
+}

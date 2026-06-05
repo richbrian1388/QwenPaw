@@ -158,10 +158,26 @@ if ($tauriExit -ne 0) {
 Set-Location $REPO_ROOT
 Write-Host "Tauri app built" -ForegroundColor Green
 
+# Stage the installer under a stable, branded name. Tauri names the NSIS output
+# after productName ("SXPaw Desktop_<ver>_x64-setup.exe"); copy it to the same
+# "SXPaw-<ver>-Windows-setup.exe" the release workflow publishes so local and CI
+# builds match. Globbed (not hardcoded) so it survives productName changes.
+$installer = Get-ChildItem (Join-Path $NSIS_DIR "*-setup.exe") | Select-Object -First 1
+if (-not $installer) {
+    throw "No Tauri Windows installer found in $NSIS_DIR"
+}
+if (-not (Test-Path $DIST)) {
+    New-Item -ItemType Directory -Force -Path $DIST | Out-Null
+}
+$STAGED = Join-Path $DIST "SXPaw-$VERSION-Windows-setup.exe"
+Copy-Item -Force $installer.FullName $STAGED
+Write-Host "Staged installer: $STAGED" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host "Build Complete!" -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host "Output:"
+Write-Host "  Installer: ${STAGED}"
 Write-Host "  NSIS bundle directory: ${NSIS_DIR}\"
 Write-Host ""
