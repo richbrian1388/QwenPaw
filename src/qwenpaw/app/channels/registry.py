@@ -28,7 +28,9 @@ _BUILTIN_SPECS: dict[str, tuple[str, str]] = {
     "mqtt": (".mqtt", "MQTTChannel"),
     "console": (".console", "ConsoleChannel"),
     "matrix": (".matrix", "MatrixChannel"),
-    "voice": (".voice", "VoiceChannel"),
+    # "voice" channel disabled for intranet/private deployments: it opens a
+    # public Cloudflare Quick Tunnel (*.trycloudflare.com) that bypasses the
+    # network perimeter.  Re-add ('.voice', 'VoiceChannel') to restore it.
     "sip": (".sip", "SIPChannel"),
     "wecom": (".wecom", "WecomChannel"),
     "xiaoyi": (".xiaoyi", "XiaoYiChannel"),

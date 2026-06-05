@@ -1,6 +1,9 @@
+import { invoke, isTauri } from "@tauri-apps/api/core";
+
 /**
- * Open an external URL, using the pywebview bridge in desktop app or
- * window.open in browser.
+ * Open an external URL (or a backend file URL such as `/files/preview/...`),
+ * using the Tauri shell in the desktop app, the legacy pywebview bridge in the
+ * old desktop, or window.open in the browser.
  *
  * @param url - The URL to open
  * @param target - Target window name (default: "_blank")
@@ -13,14 +16,25 @@ export function openExternalLink(
 ): void {
   if (!url) return;
 
-  // Resolve relative URLs to absolute (needed for pywebview which runs outside the WebView context)
+  // Resolve relative URLs to absolute (needed for the desktop shells, which
+  // open the URL outside the WebView context).
   const fullUrl = url.startsWith("http")
     ? url
     : `${window.location.origin}${url}`;
 
+  // Tauri desktop: the webview silently ignores window.open for external/file
+  // URLs, so hand off to the native `open_external` command (system browser).
+  if (isTauri()) {
+    void invoke("open_external", { url: fullUrl }).catch(() => {
+      // Last-resort fallback if the command is unavailable.
+      window.open(fullUrl, target, features);
+    });
+    return;
+  }
+
   const pywebview = (window as any).pywebview;
   if (pywebview?.api?.open_external_link) {
-    // Desktop app: use pywebview bridge to open in system browser
+    // Legacy pywebview desktop: use the bridge to open in the system browser.
     pywebview.api.open_external_link(fullUrl);
   } else {
     // Web browser: use standard window.open

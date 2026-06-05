@@ -1,6 +1,20 @@
 mod backend;
 
 use tauri::{Manager, RunEvent, WindowEvent};
+use tauri_plugin_shell::ShellExt;
+
+/// Opens a URL (including backend `http://127.0.0.1:<port>/files/...` URLs) in
+/// the user's default system handler — i.e. the system browser.
+///
+/// The web console routes "download/open file" clicks and external links here
+/// when running inside Tauri: the webview silently ignores `window.open` for
+/// external and file URLs, and the legacy `window.pywebview` bridge that the
+/// browser fallback relied on does not exist in the Tauri shell.
+#[tauri::command]
+#[allow(deprecated)]
+fn open_external(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    app.shell().open(url, None).map_err(|err| err.to_string())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -10,6 +24,7 @@ pub fn run() {
             backend::backend_port,
             backend::backend_startup_error,
             backend::restart_backend,
+            open_external,
         ])
         .manage(backend::BackendState::default())
         .setup(backend::setup)

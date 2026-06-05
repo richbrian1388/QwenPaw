@@ -157,22 +157,18 @@ def _detect_gpu() -> bool | str:
 def _upload_telemetry_sync(data: dict[str, Any]) -> bool:
     """Upload telemetry data (synchronous).
 
+    Disabled for private / intranet deployments: this function never
+    contacts ``TELEMETRY_ENDPOINT`` and always returns ``False`` so that
+    no data leaves the host even if a caller invokes it directly.
+
     Args:
-        data: Telemetry data to upload
+        data: Telemetry data to upload (ignored).
 
     Returns:
-        True if upload succeeded, False otherwise
+        Always ``False`` (nothing uploaded).
     """
-    try:
-        import httpx
-
-        with httpx.Client(timeout=2.0) as client:
-            response = client.post(TELEMETRY_ENDPOINT, json=data)
-            return response.status_code in (200, 201, 204)
-    except Exception as e:
-        # Silent failure - don't break installation
-        logger.debug("Telemetry upload failed: %s", e)
-        return False
+    logger.debug("Telemetry upload disabled; not contacting endpoint.")
+    return False
 
 
 def _get_current_version() -> str:
@@ -284,21 +280,18 @@ def mark_telemetry_collected(
 
 
 def collect_and_upload_telemetry(working_dir: Path) -> bool:
-    """Collect system info and upload telemetry.
+    """Telemetry disabled (no-op).
+
+    Auto-collection and remote upload have been disabled for private /
+    intranet deployments so that no system information is gathered or sent
+    off-host.  This function intentionally does not probe the system, does
+    not contact ``TELEMETRY_ENDPOINT``, and performs no work.
 
     Args:
-        working_dir: Path to QwenPaw working directory
+        working_dir: Path to QwenPaw working directory (unused).
 
     Returns:
-        True if upload succeeded, False otherwise
+        Always ``False`` (nothing collected or uploaded).
     """
-    # Collect system info
-    info = get_system_info()
-
-    # Upload (failures are logged internally)
-    success = _upload_telemetry_sync(info)
-
-    # Mark as collected regardless of upload success to avoid retry
-    mark_telemetry_collected(working_dir)
-
-    return success
+    logger.debug("Telemetry disabled; skipping collection and upload.")
+    return False

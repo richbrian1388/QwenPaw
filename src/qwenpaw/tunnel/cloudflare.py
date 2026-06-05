@@ -20,6 +20,11 @@ logger = logging.getLogger(__name__)
 # Pattern to extract the public URL from cloudflared output.
 _URL_RE = re.compile(r"https://[a-zA-Z0-9\-]+\.trycloudflare\.com")
 
+# Disabled for intranet/private deployments: opening a public
+# *.trycloudflare.com tunnel would expose the local service and bypass the
+# network perimeter.  Set to ``True`` to restore tunnel functionality.
+_TUNNEL_ENABLED = False
+
 
 @dataclass
 class TunnelInfo:
@@ -55,6 +60,13 @@ class CloudflareTunnelDriver:
         Blocks until the public URL is detected in cloudflared output
         (typically 2-5 seconds).
         """
+        if not _TUNNEL_ENABLED:
+            raise RuntimeError(
+                "Cloudflare tunnel is disabled for intranet/private "
+                "deployments; refusing to expose the local service via "
+                "*.trycloudflare.com.",
+            )
+
         if self._process and self._process.returncode is None:
             await self.stop()
 
