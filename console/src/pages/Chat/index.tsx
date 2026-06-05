@@ -890,7 +890,7 @@ export default function ChatPage() {
   const onFileCardClick = useCallback(
     (fileInfo: { name?: string; size?: number; url?: string }) => {
       if (fileInfo.url) {
-        void downloadFile(fileInfo.url, fileInfo.name);
+        downloadFile(fileInfo.url);
       }
     },
     [],

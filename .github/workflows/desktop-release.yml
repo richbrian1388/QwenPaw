@@ -245,7 +245,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: QwenPaw-Desktop-Tauri-macOS-${{ steps.version.outputs.version }}
-          path: dist/QwenPaw-Tauri-*-macOS.zip
+          path: dist/SXPaw-*-macOS.zip
 
   upload-release:
     needs: [build-windows, build-macos, build-tauri-windows, build-tauri-macos]
@@ -262,7 +262,7 @@ jobs:
           mv QwenPaw-Desktop-Windows-*/QwenPaw-Setup-*.exe . 2>/dev/null || true
           mv QwenPaw-Desktop-macOS-*/QwenPaw-*.zip . 2>/dev/null || true
           mv QwenPaw-Desktop-Tauri-Windows-*/SXPaw-*-Windows-setup.exe . 2>/dev/null || true
-          mv QwenPaw-Desktop-Tauri-macOS-*/QwenPaw-Tauri-*-macOS.zip . 2>/dev/null || true
+          mv QwenPaw-Desktop-Tauri-macOS-*/SXPaw-*-macOS.zip . 2>/dev/null || true
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
@@ -271,7 +271,7 @@ jobs:
             QwenPaw-Setup-*.exe
             QwenPaw-[0-9]*-macOS.zip
             SXPaw-*-Windows-setup.exe
-            QwenPaw-Tauri-*-macOS.zip
+            SXPaw-*-macOS.zip
           fail-on-unmatched-files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -462,10 +462,10 @@ jobs:
 
           upload_tauri_artifact \
             "QwenPaw-Desktop-Tauri-macOS-*" \
-            "QwenPaw-Tauri-*-macOS.zip" \
+            "SXPaw-*-macOS.zip" \
             "mac-tauri" \
-            "QwenPaw-Tauri-${VERSION}-macOS.zip" \
-            "QwenPaw-Tauri-latest-macOS.zip" \
+            "SXPaw-${VERSION}-macOS.zip" \
+            "SXPaw-latest-macOS.zip" \
             "mac-tauri-metadata.json"
 
       - name: Update desktop index
@@ -533,7 +533,7 @@ jobs:
           merge_tauri_metadata \
             "mac-tauri-metadata.json" \
             "QwenPaw-Desktop-Tauri-macOS-*" \
-            "QwenPaw-Tauri-*-macOS.zip" \
+            "SXPaw-*-macOS.zip" \
             "mac-tauri"
 
           # Upload updated desktop/index.json

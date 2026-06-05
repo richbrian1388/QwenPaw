@@ -1,6 +1,6 @@
 mod backend;
 
-use tauri::{Manager, RunEvent, WindowEvent};
+use tauri::{Manager, RunEvent, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 use tauri_plugin_shell::ShellExt;
 
 /// Opens a URL (including backend `http://127.0.0.1:<port>/files/...` URLs) in
@@ -16,6 +16,40 @@ fn open_external(app: tauri::AppHandle, url: String) -> Result<(), String> {
     app.shell().open(url, None).map_err(|err| err.to_string())
 }
 
+/// Creates the main window in code (rather than via `tauri.conf.json`) so we can
+/// attach an `on_navigation` handler.
+///
+/// The chat UI runs from the backend-hosted console at
+/// `http://127.0.0.1:<port>/console` — a remote origin where Tauri does not
+/// inject its IPC. So "download file" clicks cannot reach a Rust command, and
+/// the webview itself fetches the file but never saves it. Here we intercept
+/// top-level navigations to the backend's `/files/preview/` download URLs and
+/// hand them to the system browser (which downloads the attachment), cancelling
+/// the in-webview navigation so the console SPA stays put.
+#[allow(deprecated)]
+fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
+    let handle = app.handle().clone();
+    WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+        .title("SXPaw Desktop")
+        .inner_size(1280.0, 800.0)
+        .min_inner_size(960.0, 600.0)
+        .resizable(true)
+        .on_navigation(move |url| {
+            let is_loopback =
+                matches!(url.host_str(), Some("127.0.0.1") | Some("localhost"));
+            if is_loopback && url.path().contains("/files/preview/") {
+                // Download URL: open in the system browser (which saves the
+                // attachment) and cancel the in-webview navigation.
+                let _ = handle.shell().open(url.as_str(), None);
+                return false;
+            }
+            // Allow everything else: the initial app load and the console SPA.
+            true
+        })
+        .build()?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let build_result = tauri::Builder::default()
@@ -27,7 +61,11 @@ pub fn run() {
             open_external,
         ])
         .manage(backend::BackendState::default())
-        .setup(backend::setup)
+        .setup(|app| {
+            create_main_window(app)?;
+            backend::setup(app)?;
+            Ok(())
+        })
         .on_window_event(|window, event| {
             // The app currently has a single "main" window, so closing it
             // is equivalent to quitting. If a multi-window mode is introduced,

@@ -1,45 +1,25 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
-
 /**
- * Download (or open) a file the agent sent via send_file_to_user.
+ * Download a file the agent sent via send_file_to_user.
  *
- * The chat runs from the backend-hosted console (http://127.0.0.1:<port>),
- * so file URLs are same-origin `/files/preview/...` links whose response sets
- * `Content-Disposition: attachment`. Two environments must be handled:
+ * The chat runs from the backend-hosted console, so file URLs are same-origin
+ * `/api/files/preview/...` links whose response sets `Content-Disposition:
+ * attachment`. Navigating to such a URL downloads it without leaving the page:
  *
- * - Tauri desktop: the webview swallows `window.open` for these URLs. When the
- *   remote capability has enabled IPC on the console origin, `open_external`
- *   hands the URL to the system browser, which downloads the attachment.
- * - Plain browser (and as a fallback when IPC is unavailable): trigger a
- *   same-origin download via an anchor element, which WebView2/Chromium honor.
+ * - Plain browser: the attachment header makes the browser download the file
+ *   while keeping the current page.
+ * - Tauri desktop: the webview can't save downloads itself, so a Rust
+ *   `on_navigation` handler (src-tauri/src/lib.rs) intercepts these
+ *   `/files/preview/` navigations and opens them in the system browser, which
+ *   downloads the file, and cancels the in-webview navigation.
  *
- * @param url - File URL, absolute or root-relative (e.g. `/files/preview/...`).
- * @param filename - Suggested download filename.
+ * @param url - File URL, absolute or root-relative (e.g. `/api/files/preview/...`).
  */
-export async function downloadFile(
-  url: string,
-  filename?: string,
-): Promise<void> {
+export function downloadFile(url: string): void {
   if (!url) return;
 
   const fullUrl = url.startsWith("http")
     ? url
     : `${window.location.origin}${url}`;
 
-  if (isTauri()) {
-    try {
-      await invoke("open_external", { url: fullUrl });
-      return;
-    } catch {
-      // IPC unavailable on this page — fall through to the anchor download.
-    }
-  }
-
-  const a = document.createElement("a");
-  a.href = fullUrl;
-  if (filename) a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  window.location.assign(fullUrl);
 }
